@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>정기청소 서비스 상담 신청</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ff5722;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 26px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header-subtitle {
+            font-size: 15px;
+            color: #666;
+        }
+
+        .progress-bar {
+            background: white;
+            padding: 20px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .step-circle.active {
+            background: #ff5722;
+            border-color: #ff5722;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .step-label.active {
+            color: #ff5722;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f5f5f5;
+        }
+
+        .card-number {
+            display: inline-block;
+            background: #ff5722;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .card-title {
+            display: inline-block;
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            vertical-align: middle;
+        }
+
+        .question-group {
+            margin-bottom: 30px;
+        }
+
+        .question-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .required-mark {
+            color: #ff5722;
+            margin-left: 4px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff5722;
+            box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 16px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+            display: none;
+        }
+
+        .warning-box.show {
+            display: block;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .option-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .option-card:hover {
+            border-color: #ff5722;
+            background: #fff5f2;
+        }
+
+        .option-card.selected {
+            border-color: #ff5722;
+            background: #fff5f2;
+        }
+
+        .option-card input[type="radio"],
+        .option-card input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .option-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .option-desc {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item:hover {
+            background: #f5f5f5;
+        }
+
+        .checkbox-item input {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            cursor: pointer;
+            accent-color: #ff5722;
+        }
+
+        .checkbox-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .number-input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .number-input {
+            width: 120px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .submit-section {
+            background: white;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .submit-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #f4511e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+        }
+
+        .submit-info {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        .success-message {
+            background: white;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #4caf50;
+            margin-bottom: 20px;
+        }
+
+        .success-message h3 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .success-message p {
+            font-size: 15px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .input-row,
+            .option-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 30px 20px;
+            }
+
+            .progress-bar {
+                padding: 20px;
+            }
+
+            .step-label {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">LETUS</div>
+            <h1 class="header-title">정기청소 서비스 상담 신청</h1>
+            <p class="header-subtitle">맞춤형 청소 서비스를 제안해드립니다</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-steps">
+                <div class="progress-step">
+                    <div class="step-circle active">1</div>
+                    <div class="step-label active">기본정보</div>
+                </div>
+                <div class="progress-step">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">사무실정보</div>
+                </div>
+                <div class="progress-step">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">청소범위</div>
+                </div>
+                <div class="progress-step">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">추가서비스</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            <div class="success-icon">✓</div>
+            <h3>상담 신청이 완료되었습니다</h3>
+            <p>담당자가 확인 후 24시간 이내에 연락드리겠습니다.</p>
+        </div>
+
+        <form id="quoteForm">
+            <!-- STEP 1: 기본 정보 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-number">1</span>
+                    <h2 class="card-title">기본 정보를 입력해주세요</h2>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">회사명 <span class="required-mark">*</span></label>
+                    <input type="text" class="input-field" id="companyName" required placeholder="회사명을 입력해주세요">
+                </div>
+
+                <div class="input-row">
+                    <div class="question-group">
+                        <label class="question-label">담당자명 <span class="required-mark">*</span></label>
+                        <input type="text" class="input-field" id="contactName" required placeholder="이름">
+                    </div>
+                    <div class="question-group">
+                        <label class="question-label">연락처 <span class="required-mark">*</span></label>
+                        <input type="tel" class="input-field" id="phone" required placeholder="010-0000-0000">
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">사무실 주소 <span class="required-mark">*</span></label>
+                    <input type="text" class="input-field" id="address" required placeholder="서울시 강남구 테헤란로 123">
+                </div>
+            </div>
+
+            <!-- STEP 2: 사무실 정보 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-number">2</span>
+                    <h2 class="card-title">사무실 정보를 알려주세요</h2>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">상주 인원은 몇 명인가요?</label>
+                    <input type="number" class="input-field" id="staffCount" min="0" placeholder="예: 20명">
+                    <div class="info-box">💡 대략적인 인원수를 입력해주세요</div>
+                </div>
+
+                <div class="input-row">
+                    <div class="question-group">
+                        <label class="question-label">사무실 평수 <span class="required-mark">*</span></label>
+                        <input type="number" class="input-field" id="area" required min="1" placeholder="예: 100평">
+                        <div class="info-box">전용면적 기준</div>
+                    </div>
+
+                    <div class="question-group">
+                        <label class="question-label">화장실 개수</label>
+                        <input type="number" class="input-field" id="bathroomCount" min="0" placeholder="예: 4개">
+                    </div>
+                </div>
+
+                <div id="largeAreaWarning" class="warning-box">
+                    ⚠️ 400평 이상 사무실은 현장 실사 후 정확한 견적을 안내해드립니다
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">희망 청소 횟수 <span class="required-mark">*</span></label>
+                    <div class="option-grid">
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="0.25" required>
+                            <div class="option-title">월 1회</div>
+                            <div class="option-desc">한 달에 한 번</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="0.5">
+                            <div class="option-title">월 2회</div>
+                            <div class="option-desc">2주에 한 번</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="1">
+                            <div class="option-title">주 1회</div>
+                            <div class="option-desc">일주일에 한 번</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="2">
+                            <div class="option-title">주 2회</div>
+                            <div class="option-desc">일주일에 두 번</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="3">
+                            <div class="option-title">주 3회</div>
+                            <div class="option-desc">일주일에 세 번</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="5">
+                            <div class="option-title">주 5회</div>
+                            <div class="option-desc">평일 매일</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="6">
+                            <div class="option-title">주 6회</div>
+                            <div class="option-desc">토요일 포함</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="frequency" value="7">
+                            <div class="option-title">주 7회</div>
+                            <div class="option-desc">매일</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">현재 청소업체를 사용하고 계신가요?</label>
+                    <div class="option-grid">
+                        <label class="option-card">
+                            <input type="radio" name="existingVendor" value="사용중" checked>
+                            <div class="option-title">사용중</div>
+                            <div class="option-desc">현재 업체 이용중</div>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="existingVendor" value="미사용">
+                            <div class="option-title">미사용</div>
+                            <div class="option-desc">처음 시작</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: 청소 범위 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-number">3</span>
+                    <h2 class="card-title">청소 범위를 선택해주세요</h2>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">추가 청소 옵션 (해당사항 모두 선택)</label>
+                    <div class="checkbox-list">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trashCan50">
+                            <label for="trashCan50">개인 쓰레기통 50개 이상</label>
+                        </div>
+                        <div class="info-box" style="margin-left: 32px;">50개 이하는 기본 포함됩니다</div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="windowClean">
+                            <label for="windowClean">유리문 손자국 및 먼지 제거 (주1회 또는 매회)</label>
+                        </div>
+                        <div class="info-box" style="margin-left: 32px;">월 1회는 기본 포함됩니다</div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="commonAreaClean">
+                            <label for="commonAreaClean">공용부 청소 (계단 및 복도)</label>
+                        </div>
+                        <div class="number-input-group" id="commonAreaFloorInput" style="display: none; margin-left: 32px;">
+                            <span>청소할 층수:</span>
+                            <input type="number" class="number-input" id="commonAreaFloor" min="1" placeholder="예: 2">
+                            <span>개층</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: 추가 서비스 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-number">4</span>
+                    <h2 class="card-title">필요한 추가 서비스가 있나요?</h2>
+                </div>
+
+                <div class="question-group">
+                    <label class="question-label">추가 작업 (필요한 항목 모두 선택)</label>
+                    <div class="info-box" style="margin-bottom: 15px;">💡 3개 이상 선택 시 별도 비용이 발생합니다</div>
+                    
+                    <div class="checkbox-list">
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="화분 물주기">
+                            <label>화분 물주기</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="사무용품 정리">
+                            <label>사무용품 정리</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="스낵바 채우기">
+                            <label>스낵바 채우기</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="비품 채우기">
+                            <label>비품 채우기 (휴지, 물티슈 등)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="회의실 선 정리">
+                            <label>회의실 선 정리</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="휴게실 정리 (담요 등)">
+                            <label>휴게실 정리 (담요, 쿠션 등)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="담배꽁초 치우기">
+                            <label>담배꽁초 치우기</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="가습기 물 채우기">
+                            <label>가습기 물 채우기</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="커피머신 관리">
+                            <label>커피머신 관리 (찌꺼기 제거, 원두 보충)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="파쇄기 비우기">
+                            <label>파쇄기 비우기</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalTasks" value="냉장고 음식물 비우기">
+                            <label>냉장고 음식물 비우기</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" class="submit-btn">상담 신청하기</button>
+                <p class="submit-info">담당자가 확인 후 24시간 이내에 연락드립니다</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Google Sheets 스크립트 URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCXK1isRNREp53wTr9eVYcpFr-wDf3DhzvKvzy2B3UjmjIUNhgHsXeFvVbS3c6Pj49/exec';
+
+        // 옵션 카드 선택 효과
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const input = this.querySelector('input');
+                if (input.type === 'radio') {
+                    this.closest('.option-grid').querySelectorAll('.option-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    input.checked = true;
+                } else {
+                    this.classList.toggle('selected');
+                    input.checked = !input.checked;
+                }
+            });
+        });
+
+        // 평수 입력 시 경고
+        document.getElementById('area').addEventListener('input', function() {
+            const warning = document.getElementById('largeAreaWarning');
+            warning.classList.toggle('show', parseInt(this.value) >= 400);
+        });
+
+        // 공용부 체크박스
+        document.getElementById('commonAreaClean').addEventListener('change', function() {
+            const input = document.getElementById('commonAreaFloorInput');
+            input.style.display = this.checked ? 'flex' : 'none';
+            document.getElementById('commonAreaFloor').required = this.checked;
+        });
+
+        // 폼 제출
+        document.getElementById('quoteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const selectedTasks = Array.from(document.querySelectorAll('input[name="additionalTasks"]:checked'))
+                .map(cb => cb.value);
+
+            const formData = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                companyName: document.getElementById('companyName').value,
+                contactName: document.getElementById('contactName').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                staffCount: parseInt(document.getElementById('staffCount').value) || 0,
+                area: parseInt(document.getElementById('area').value),
+                frequency: parseFloat(document.querySelector('input[name="frequency"]:checked').value),
+                bathroomCount: parseInt(document.getElementById('bathroomCount').value) || 0,
+                existingVendor: document.querySelector('input[name="existingVendor"]:checked').value,
+                trashCan50: document.getElementById('trashCan50').checked ? '예' : '아니오',
+                windowClean: document.getElementById('windowClean').checked ? '예' : '아니오',
+                commonAreaFloor: document.getElementById('commonAreaClean').checked ? 
+                    parseInt(document.getElementById('commonAreaFloor').value) : 0,
+                additionalTaskCount: selectedTasks.length,
+                additionalTaskList: selectedTasks.join(', ')
+            };
+
+            try {
+                // 실제 배포 시 주석 해제
+                
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+
+                document.getElementById('quoteForm').style.display = 'none';
+                document.querySelector('.progress-bar').style.display = 'none';
+                document.getElementById('successMessage').classList.add('show');
+
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+
+            } catch (error) {
+                alert('전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        });
+    </script>
+</body>
+</html>
