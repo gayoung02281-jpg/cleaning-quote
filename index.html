@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>레터스 견적서</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #141420;
+  --surface2: #1c1c2e;
+  --border: #2a2a40;
+  --primary: #6366f1;
+  --primary-glow: rgba(99,102,241,0.3);
+  --accent: #22d3ee;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-bright: #f8fafc;
+  --radius: 16px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size: 15px; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.header .logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: #fff;
+}
+.header h1 { font-size: 17px; font-weight: 600; }
+.header .step-badge {
+  margin-left: auto;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Screens */
+.screen { display: none; padding: 20px; padding-bottom: 100px; }
+.screen.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* Upload Zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  transition: all 0.3s;
+  background: var(--surface);
+  margin-bottom: 24px;
+}
+.upload-zone.dragover {
+  border-color: var(--primary);
+  background: rgba(99,102,241,0.08);
+  box-shadow: 0 0 40px var(--primary-glow);
+}
+.upload-zone .icon { font-size: 48px; margin-bottom: 16px; }
+.upload-zone p { color: var(--text-dim); margin-bottom: 16px; font-size: 14px; }
+.upload-btn {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.upload-btn:active { transform: scale(0.96); }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+/* Items Table */
+.items-table { width: 100%; font-size: 13px; }
+.items-table th {
+  text-align: left; padding: 8px 6px;
+  color: var(--text-dim); font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.items-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(42,42,64,0.5);
+}
+.items-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.cat-header {
+  background: var(--surface2);
+  font-weight: 600;
+  color: var(--accent);
+}
+.cat-header td { padding: 10px 6px !important; }
+.subtotal-row { font-weight: 600; color: var(--text-bright); }
+.subtotal-row td { border-bottom: 2px solid var(--border) !important; }
+.free-service { color: var(--text-dim); font-style: italic; }
+
+/* Form */
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block; font-size: 13px;
+  color: var(--text-dim); margin-bottom: 6px;
+  font-weight: 500;
+}
+.form-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--text-dim); }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+
+/* Buttons */
+.btn {
+  width: 100%; padding: 16px;
+  border-radius: 14px; border: none;
+  font-family: inherit; font-size: 16px;
+  font-weight: 600; cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-group { display: flex; gap: 10px; margin-top: 20px; }
+.btn-group .btn { flex: 1; }
+
+/* Result Stats */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.stat-box {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-box .label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+.stat-box .value { font-size: 20px; font-weight: 700; }
+.stat-box .value.accent { color: var(--accent); }
+.stat-box .value.success { color: var(--success); }
+.stat-box .value.warning { color: var(--warning); }
+
+/* Progress */
+.progress-bar {
+  background: var(--surface2);
+  border-radius: 8px;
+  height: 6px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,10,15,0.9);
+  z-index: 300;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+}
+.loading-overlay.show { display: flex; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text-dim); }
+
+/* Margin note */
+.margin-note {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--warning);
+  margin-bottom: 16px;
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">L</div>
+  <h1>레터스 견적서</h1>
+  <span class="step-badge" id="stepBadge">1/3</span>
+</div>
+
+<!-- Screen 1: Upload -->
+<div class="screen active" id="screen1">
+  <div class="upload-zone" id="dropZone">
+    <div class="icon">📄</div>
+    <p>협력사 견적서 엑셀 파일을<br>업로드하세요</p>
+    <button class="upload-btn" id="uploadBtn" type="button">파일 선택</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm" style="display:none;">
+  </div>
+  
+  <div class="card">
+    <div class="card-title">사용 방법</div>
+    <p style="font-size:13px; color:var(--text-dim); line-height:1.8;">
+      1. 협력사 견적서 엑셀 파일 업로드<br>
+      2. 마진율, 고객 정보 입력<br>
+      3. 자동 견적서 생성 → PDF 다운로드 / 이메일 발송
+    </p>
+  </div>
+</div>
+
+<!-- Screen 2: Review & Settings -->
+<div class="screen" id="screen2">
+  <div class="card">
+    <div class="card-title">📋 협력사 견적 내역</div>
+    <div style="overflow-x:auto;">
+      <table class="items-table" id="itemsTable">
+        <thead><tr><th>품목</th><th>수량</th><th class="num">단가</th><th class="num">합계</th></tr></thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+    </div>
+    <div id="coopTotalDisplay" style="text-align:right; margin-top:12px; font-size:15px; font-weight:600;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚙️ 설정</div>
+    <div class="form-group">
+      <label class="form-label">공헌이익률 (%)</label>
+      <input class="form-input" type="number" id="marginInput" value="8" min="1" max="50" placeholder="8">
+    </div>
+    <div class="form-group">
+      <label class="form-label">고객사명</label>
+      <input class="form-input" type="text" id="customerName" placeholder="예: 이마고픽쳐스">
+    </div>
+    <div class="form-group">
+      <label class="form-label">고객 이메일</label>
+      <input class="form-input" type="email" id="customerEmail" placeholder="example@company.com">
+    </div>
+  </div>
+  
+  <div class="btn-group">
+    <button class="btn btn-outline" onclick="goScreen(1)">← 뒤로</button>
+    <button class="btn btn-primary" onclick="generateQuote()">견적서 생성 →</button>
+  </div>
+</div>
+
+<!-- Screen 3: Result -->
+<div class="screen" id="screen3">
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="label">고객 제출가</div>
+      <div class="value accent" id="resultCustomerPrice">-</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">협력사 원가</div>
+      <div class="value" id="resultCoopPrice">-</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">공헌이익</div>
+      <div class="value success" id="resultProfit">-</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">공헌이익률</div>
+      <div class="value warning" id="resultMargin">-</div>
+    </div>
+  </div>
+  
+  <div class="margin-note" id="marginNote" style="display:none;"></div>
+
+  <div class="card">
+    <div class="card-title">📋 레터스 견적 내역</div>
+    <div style="overflow-x:auto;">
+      <table class="items-table" id="resultTable">
+        <thead><tr><th>품목</th><th>수량</th><th class="num">단가</th><th class="num">합계</th></tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="downloadPDF()" style="margin-bottom:10px;">
+    📥 PDF 다운로드
+  </button>
+  <button class="btn btn-success" onclick="sendEmailWithPDF()" style="margin-bottom:10px;">
+    ✉️ PDF 첨부 이메일 발송
+  </button>
+  <button class="btn btn-outline" onclick="goScreen(2)">
+    ← 수정하기
+  </button>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">처리 중...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// Global State
+// ============================================================
+const SHEET_ID = '165cu6Z82wz9l9WS7TGxGch9AOFPzYbAxQ_btIXh-99g';
+const LOGO_B64 = 'data:image/png;base64,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';
+let coopData = { mat:[], veh:[], lab:[], opt:[], coopTotal:0, workDate:'', quoteDate:'', departure:'', arrival:'', customerContact:'' };
+let priceDB = [];
+let letusResult = { items:[], indirectCosts:[], finalPrice:0, margin:0, marginNote:'' };
+
+// ============================================================
+// Screen Navigation
+// ============================================================
+function goScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + n).classList.add('active');
+  document.getElementById('stepBadge').textContent = n + '/3';
+  window.scrollTo(0, 0);
+}
+
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+function showToast(msg, duration) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg.replace(/\n/g, '<br>');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration || 2500);
+}
+function fmt(n) { return n ? n.toLocaleString('ko-KR') : '0'; }
+function truncPrice(price, unit) {
+  if (unit <= 0) unit = 1000;
+  return Math.floor(Math.floor(price / unit) * unit);
+}
+
+// ============================================================
+// File Upload
+// ============================================================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const uploadBtn = document.getElementById('uploadBtn');
+
+uploadBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileInput.click();
+});
+dropZone.addEventListener('click', (e) => {
+  if (e.target === uploadBtn) return;
+  fileInput.click();
+});
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+async function handleFile(file) {
+  showLoading('엑셀 파일 읽는 중...');
+  try {
+    // FileReader 방식 (iOS 호환)
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(new Uint8Array(e.target.result));
+      reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+      reader.readAsArrayBuffer(file);
+    });
+    
+    showLoading('엑셀 파일 분석 중...');
+    const wb = XLSX.read(data, { type: 'array' });
+    
+    const coopSheet = wb.Sheets['협력사'];
+    if (!coopSheet) {
+      const names = wb.SheetNames.join(', ');
+      throw new Error('협력사 시트를 찾을 수 없습니다. (시트: ' + names + ')');
+    }
+    
+    parseCoopSheet(coopSheet);
+    
+    // Parse 레터스 sheet for addresses
+    const letusSheet = wb.Sheets['레터스'];
+    if (letusSheet) {
+      parseLetusInfo(letusSheet);
+    }
+    
+    showLoading('Google Sheets 단가표 로딩 중...');
+    await loadPriceDB();
+    
+    renderItemsTable();
+    hideLoading();
+    goScreen(2);
+    showToast('✅ 파일 분석 완료');
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+  }
+}
+
+// ============================================================
+// Parse Cooperator Sheet
+// ============================================================
+function parseCoopSheet(ws) {
+  const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  
+  // Find 소계 rows
+  const subtotalRows = [];
+  for (let r = 13; r < 60; r++) {
+    const row = json[r] || [];
+    if (String(row[7] || '').trim() === '소계') {
+      subtotalRows.push(r);
+      if (subtotalRows.length >= 4) break;
+    }
+  }
+  
+  if (subtotalRows.length < 4) throw new Error('소계 행을 찾을 수 없습니다 (' + subtotalRows.length + '개)');
+  
+  const ranges = [
+    [13, subtotalRows[0] - 1],  // 자재비
+    [subtotalRows[0] + 1, subtotalRows[1] - 1],  // 차량비
+    [subtotalRows[1] + 1, subtotalRows[2] - 1],  // 인건비
+    [subtotalRows[2] + 1, subtotalRows[3] - 1],  // 옵션
+  ];
+  
+  const categories = ['자재비', '차량비', '인건비', '옵션'];
+  const results = [[], [], [], []];
+  
+  for (let c = 0; c < 4; c++) {
+    for (let r = ranges[c][0]; r <= ranges[c][1]; r++) {
+      const row = json[r] || [];
+      const name = String(row[5] || '').trim();
+      const qty = Number(row[6]) || 0;
+      const price = Number(row[7]) || 0;
+      const days = Number(row[8]) || 1;
+      const total = row[9];
+      const remark = String(row[10] || '').trim();
+      
+      if (qty > 0 && name) {
+        const isFree = price > 0 && (total === '' || total === null || total === undefined || Number(total) === 0);
+        results[c].push({ name, qty, unitPrice: price, days: days || 1, remark, isFreeService: isFree, category: categories[c] });
+      }
+    }
+  }
+  
+  coopData.mat = results[0];
+  coopData.veh = results[1];
+  coopData.lab = results[2];
+  coopData.opt = results[3];
+  
+  // Find 총합계
+  for (let r = 55; r < 70; r++) {
+    const row = json[r] || [];
+    const text = String(row[6] || '') + String(row[5] || '') + String(row[7] || '');
+    if (text.includes('총') && text.includes('계')) {
+      const val = Number(row[9]) || 0;
+      if (val > 0) { coopData.coopTotal = val; break; }
+    }
+  }
+  
+  // Work date & quote date (Row 10: C5=견적일자, C10=작업일 - Excel serial dates)
+  if (json[9]) {
+    coopData.workDate = json[9][9] || '';
+    coopData.quoteDate = json[9][4] || '';
+  }
+}
+
+// ============================================================
+// Parse 레터스 sheet for addresses
+// ============================================================
+function parseLetusInfo(ws) {
+  const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  
+  // 동적으로 출발지/도착지 행 찾기
+  for (let r = 55; r < json.length; r++) {
+    const row = json[r] || [];
+    const label = String(row[2] || '').trim();
+    if (label === '출발지') {
+      coopData.departure = String(row[4] || '').trim();
+      coopData.customerContact = String(row[10] || '').trim();
+    }
+    if (label === '도착지') {
+      coopData.arrival = String(row[4] || '').trim();
+    }
+  }
+}
+
+// ============================================================
+// Google Sheets Price DB
+// ============================================================
+async function loadPriceDB() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('단가표')}`;
+  let resp;
+  try {
+    resp = await fetch(url);
+  } catch(e) {
+    throw new Error('단가표 서버 연결 실패. 인터넷 연결을 확인해주세요.');
+  }
+  if (!resp.ok) throw new Error('단가표 로딩 실패 (HTTP ' + resp.status + ')');
+  const csv = await resp.text();
+  if (!csv || csv.length < 10) throw new Error('단가표가 비어있습니다. Google Sheets 공유 설정을 확인하세요.');
+  
+  priceDB = [];
+  const lines = csv.split('\n');
+  let currentCategory = '';
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    if (cols.length < 6) continue;
+    
+    // Category carry-forward (VBA pattern)
+    if (cols[0] && cols[0].trim()) currentCategory = cols[0].trim();
+    
+    // cols[2]=품목명, cols[3]=DB가, cols[5]=고정/조정, cols[6]=조정범위
+    const itemName = (cols[2] || '').trim();
+    const priceTypeStr = (cols[5] || '').trim();
+    if (!itemName || !priceTypeStr) continue;
+    
+    // Parse adjustment range (e.g. "0~3000")
+    let adjMin = 0, adjMax = 0;
+    if (cols.length > 6 && cols[6]) {
+      const rangeParts = cols[6].split('~');
+      if (rangeParts.length >= 2) {
+        adjMin = Number(rangeParts[0]) || 0;
+        adjMax = Number(rangeParts[1]) || 0;
+      }
+    }
+    
+    priceDB.push({
+      category: currentCategory,
+      itemName: itemName,
+      priceType: priceTypeStr === '고정' ? 1 : 2,
+      dbPrice: Number(String(cols[3]).replace(/,/g, '')) || 0,
+      adjMin: adjMin,
+      adjMax: adjMax,
+      truncUnit: currentCategory === '자재비' ? 1000 : 10000,
+    });
+  }
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+    else { current += ch; }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+// ============================================================
+// Render Items Table
+// ============================================================
+function renderItemsTable() {
+  const body = document.getElementById('itemsBody');
+  body.innerHTML = '';
+  
+  const cats = [
+    { label: '자재비', items: coopData.mat },
+    { label: '차량비', items: coopData.veh },
+    { label: '인건비', items: coopData.lab },
+    { label: '옵션', items: coopData.opt },
+  ];
+  
+  for (const cat of cats) {
+    if (cat.items.length === 0) continue;
+    body.innerHTML += `<tr class="cat-header"><td colspan="4">${cat.label}</td></tr>`;
+    let subtotal = 0;
+    for (const item of cat.items) {
+      const total = item.isFreeService ? '-' : fmt(item.unitPrice * item.qty * item.days);
+      if (!item.isFreeService) subtotal += item.unitPrice * item.qty * item.days;
+      body.innerHTML += `<tr${item.isFreeService?' class="free-service"':''}>
+        <td>${item.name}${item.remark ? '<br><small style="color:var(--text-dim)">'+item.remark+'</small>' : ''}</td>
+        <td>${item.qty}${item.days > 1 ? '×'+item.days+'일' : ''}</td>
+        <td class="num">${fmt(item.unitPrice)}</td>
+        <td class="num">${total}</td>
+      </tr>`;
+    }
+    body.innerHTML += `<tr class="subtotal-row"><td colspan="3">소계</td><td class="num">${fmt(subtotal)}</td></tr>`;
+  }
+  
+  document.getElementById('coopTotalDisplay').innerHTML = 
+    `협력사 총합계: <span style="color:var(--accent)">${fmt(Math.round(coopData.coopTotal))}원</span>`;
+}
+
+// ============================================================
+// Generate Quote (main pricing logic)
+// ============================================================
+async function generateQuote() {
+  const marginRate = Number(document.getElementById('marginInput').value);
+  const customerName = document.getElementById('customerName').value.trim();
+  const customerEmail = document.getElementById('customerEmail').value.trim();
+  
+  if (!marginRate || marginRate < 1 || marginRate > 50) { alert('마진율을 1~50% 사이로 입력하세요.'); return; }
+  if (!customerName) { alert('고객사명을 입력하세요.'); return; }
+  if (!customerEmail) { alert('이메일을 입력하세요.'); return; }
+  
+  showLoading('견적서 생성 중...');
+  await new Promise(r => setTimeout(r, 100));
+  
+  try {
+    const targetMargin = marginRate / 100;
+    const coopTotal = coopData.coopTotal;
+    
+    // Apply prices at given ratio
+    function applyPricesAtRatio(ratio) {
+      const allItems = [];
+      const cats = [
+        { items: coopData.mat, cat: '자재비', truncUnit: 1000 },
+        { items: coopData.veh, cat: '차량비', truncUnit: 10000 },
+        { items: coopData.lab, cat: '인건비', truncUnit: 10000 },
+        { items: coopData.opt, cat: '옵션', truncUnit: 10000 },
+      ];
+      
+      for (const c of cats) {
+        for (const item of c.items) {
+          if (item.isFreeService) {
+            allItems.push({ ...item, letusPrice: item.unitPrice, letusTotal: 0, category: c.cat });
+            continue;
+          }
+          
+          const coopPrice = item.unitPrice;
+          let letusPrice = 0;
+          
+          if (coopPrice <= 0) {
+            // DB match for zero-price items
+            const match = priceDB.find(r => r.category === c.cat && 
+              (item.name.includes(r.itemName) || r.itemName.includes(item.name)));
+            letusPrice = match ? match.dbPrice : 0;
+          } else {
+            // Find max price
+            let maxPrice = 0;
+            const match = priceDB.find(r => r.category === c.cat && 
+              (item.name.includes(r.itemName) || r.itemName.includes(item.name)));
+            
+            if (match) {
+              if (match.priceType === 1) {
+                maxPrice = Math.max(match.dbPrice, coopPrice);
+              } else {
+                maxPrice = truncPrice(coopPrice + match.adjMax, match.truncUnit);
+              }
+            } else {
+              maxPrice = truncPrice(coopPrice + (c.truncUnit === 1000 ? 3000 : 30000), c.truncUnit);
+            }
+            
+            letusPrice = truncPrice(coopPrice + (maxPrice - coopPrice) * ratio, c.truncUnit);
+            if (letusPrice < coopPrice) letusPrice = coopPrice;
+          }
+          
+          allItems.push({
+            ...item,
+            letusPrice,
+            letusTotal: letusPrice * item.qty * item.days,
+            category: c.cat,
+          });
+        }
+      }
+      return allItems;
+    }
+    
+    // Calculate final price from items (with overhead)
+    function calcFinalPrice(items, overrides = {}) {
+      const matTotal = items.filter(i => i.category === '자재비' && !i.isFreeService).reduce((s, i) => s + i.letusTotal, 0);
+      const vehTotal = items.filter(i => i.category === '차량비' && !i.isFreeService).reduce((s, i) => s + i.letusTotal, 0);
+      const labTotal = items.filter(i => i.category === '인건비' && !i.isFreeService).reduce((s, i) => s + i.letusTotal, 0);
+      const optTotal = items.filter(i => i.category === '옵션' && !i.isFreeService).reduce((s, i) => s + i.letusTotal, 0);
+      
+      const direct = matTotal + vehTotal + labTotal + optTotal;
+      
+      const gonguPct = overrides.gongu ?? 5;
+      const gonggwaPct = overrides.gonggwa ?? 5;
+      const unyoungPct = overrides.unyoung ?? 5;
+      const iikPct = overrides.iik ?? 10;
+      
+      const gongu = gonguPct > 0 ? (matTotal + labTotal) * gonguPct / 100 : 0;
+      const gonggwa = (direct + gongu) * gonggwaPct / 100;
+      const unyoung = (direct + gongu + gonggwa) * unyoungPct / 100;
+      const subtotal = direct + gongu + gonggwa + unyoung;
+      const iik = subtotal * iikPct / 100;
+      const total = subtotal + iik;
+      const finalPrice = Math.floor(total / 10000) * 10000;
+      
+      return {
+        matTotal, vehTotal, labTotal, optTotal, direct,
+        gongu, gonggwa, unyoung, iik, finalPrice,
+        gonguPct, gonggwaPct, unyoungPct, iikPct,
+      };
+    }
+    
+    function calcMargin(items, overrides) {
+      const { finalPrice } = calcFinalPrice(items, overrides);
+      return finalPrice > 0 ? (finalPrice - coopTotal) / finalPrice : 0;
+    }
+    
+    // Binary search for best ratio
+    let bestRatio = 0;
+    let bestMarginDiff = 1;
+    let marginNote = '';
+    
+    const marginAtZero = calcMargin(applyPricesAtRatio(0));
+    const marginAtOne = calcMargin(applyPricesAtRatio(1));
+    
+    if (marginAtZero >= targetMargin) {
+      bestRatio = 0;
+      marginNote = '최소 단가에서도 목표 초과';
+    } else if (marginAtOne <= targetMargin) {
+      bestRatio = 1;
+      marginNote = '최대 단가에서도 목표 미달';
+    } else {
+      let lo = 0, hi = 1;
+      for (let iter = 0; iter < 40; iter++) {
+        const mid = (lo + hi) / 2;
+        const m = calcMargin(applyPricesAtRatio(mid));
+        if (m >= targetMargin && (m - targetMargin) < bestMarginDiff) {
+          bestMarginDiff = m - targetMargin;
+          bestRatio = mid;
+        }
+        if (m < targetMargin) lo = mid; else hi = mid;
+        if (Math.abs(m - targetMargin) < 0.001) break;
+      }
+    }
+    
+    // Apply best ratio
+    let finalItems = applyPricesAtRatio(bestRatio);
+    let overrides = {};
+    let curMargin = calcMargin(finalItems, overrides);
+    
+    // Step 9-1: Revert individual items to coop price
+    if (curMargin > targetMargin + 0.005) {
+      const impacts = finalItems
+        .map((item, idx) => ({
+          idx,
+          impact: (item.letusPrice - item.unitPrice) * item.qty * item.days,
+          coopPrice: item.unitPrice,
+        }))
+        .filter(x => x.impact > 0 && x.coopPrice > 0)
+        .sort((a, b) => b.impact - a.impact);
+      
+      for (const { idx, coopPrice } of impacts) {
+        const saved = finalItems[idx].letusPrice;
+        finalItems[idx].letusPrice = coopPrice;
+        finalItems[idx].letusTotal = coopPrice * finalItems[idx].qty * finalItems[idx].days;
+        
+        const newMargin = calcMargin(finalItems, overrides);
+        if (newMargin < targetMargin) {
+          finalItems[idx].letusPrice = saved;
+          finalItems[idx].letusTotal = saved * finalItems[idx].qty * finalItems[idx].days;
+        }
+      }
+      curMargin = calcMargin(finalItems, overrides);
+      marginNote = '개별 항목 최적화 적용';
+    }
+    
+    // Step 9-2: Indirect cost adjustment
+    if (curMargin > targetMargin + 0.005) {
+      // 1. 공구손료 → 0%
+      if (curMargin > targetMargin + 0.005) {
+        overrides.gongu = 0;
+        curMargin = calcMargin(finalItems, overrides);
+      }
+      // 2. 공과잡비 5% → 3%
+      if (curMargin > targetMargin + 0.005) {
+        overrides.gonggwa = 3;
+        curMargin = calcMargin(finalItems, overrides);
+      }
+      // 3. 운영비 5% → 3%
+      if (curMargin > targetMargin + 0.005) {
+        overrides.unyoung = 3;
+        curMargin = calcMargin(finalItems, overrides);
+      }
+      // 4. 기업이윤 10% → 5% (step by step)
+      if (curMargin > targetMargin + 0.005) {
+        for (let pct = 9; pct >= 5; pct--) {
+          overrides.iik = pct;
+          curMargin = calcMargin(finalItems, overrides);
+          if (curMargin <= targetMargin + 0.005) break;
+        }
+      }
+      
+      curMargin = calcMargin(finalItems, overrides);
+      if (curMargin > targetMargin + 0.005) {
+        marginNote = `간접비 조정 후에도 최소 ${(curMargin*100).toFixed(1)}%`;
+      } else {
+        marginNote = '간접비 비율 조정 적용';
+      }
+    }
+    
+    // Final calculation
+    const finalCalc = calcFinalPrice(finalItems, overrides);
+    const profit = finalCalc.finalPrice - coopTotal;
+    const actualMargin = finalCalc.finalPrice > 0 ? (profit / finalCalc.finalPrice) * 100 : 0;
+    
+    // Store result
+    letusResult = {
+      items: finalItems,
+      calc: finalCalc,
+      finalPrice: finalCalc.finalPrice,
+      coopTotal,
+      profit,
+      margin: actualMargin,
+      marginNote,
+      overrides,
+      customerName,
+      customerEmail,
+    };
+    
+    renderResult();
+    hideLoading();
+    goScreen(3);
+    showToast('✅ 견적서 생성 완료');
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+    console.error(e);
+  }
+}
+
+// ============================================================
+// Render Result
+// ============================================================
+function renderResult() {
+  const r = letusResult;
+  document.getElementById('resultCustomerPrice').textContent = fmt(r.finalPrice) + '원';
+  document.getElementById('resultCoopPrice').textContent = fmt(Math.round(r.coopTotal)) + '원';
+  document.getElementById('resultProfit').textContent = fmt(Math.round(r.profit)) + '원';
+  document.getElementById('resultMargin').textContent = r.margin.toFixed(1) + '%';
+  
+  if (r.marginNote) {
+    document.getElementById('marginNote').style.display = 'block';
+    document.getElementById('marginNote').textContent = '💡 ' + r.marginNote;
+  } else {
+    document.getElementById('marginNote').style.display = 'none';
+  }
+  
+  const body = document.getElementById('resultBody');
+  body.innerHTML = '';
+  
+  const catNames = ['자재비', '차량비', '인건비', '옵션'];
+  for (const catName of catNames) {
+    const items = r.items.filter(i => i.category === catName);
+    if (items.length === 0) continue;
+    
+    body.innerHTML += `<tr class="cat-header"><td colspan="4">${catName}</td></tr>`;
+    let subtotal = 0;
+    for (const item of items) {
+      const total = item.isFreeService ? '-' : fmt(item.letusTotal);
+      if (!item.isFreeService) subtotal += item.letusTotal;
+      body.innerHTML += `<tr${item.isFreeService?' class="free-service"':''}>
+        <td>${item.name}</td>
+        <td>${item.qty}</td>
+        <td class="num">${fmt(item.letusPrice)}</td>
+        <td class="num">${total}</td>
+      </tr>`;
+    }
+    body.innerHTML += `<tr class="subtotal-row"><td colspan="3">소계</td><td class="num">${fmt(subtotal)}</td></tr>`;
+  }
+  
+  // Indirect costs
+  const c = r.calc;
+  const indirects = [];
+  if (c.gonguPct > 0) indirects.push(['공구손료 ' + c.gonguPct + '%', c.gongu]);
+  indirects.push(['공과잡비 ' + c.gonggwaPct + '%', c.gonggwa]);
+  indirects.push(['운영비 ' + c.unyoungPct + '%', c.unyoung]);
+  indirects.push(['기업이윤 ' + c.iikPct + '%', c.iik]);
+  
+  for (const [label, val] of indirects) {
+    body.innerHTML += `<tr><td colspan="3" style="color:var(--text-dim)">${label}</td><td class="num" style="color:var(--text-dim)">${fmt(Math.round(val))}</td></tr>`;
+  }
+  body.innerHTML += `<tr class="subtotal-row" style="font-size:15px"><td colspan="3">총합계 (부가세별도)</td><td class="num" style="color:var(--accent)">${fmt(r.finalPrice)}</td></tr>`;
+}
+
+// ============================================================
+// PDF Download
+// ============================================================
+function excelDateToStr(serial) {
+  if (!serial || serial < 1000) return '';
+  const d = new Date((serial - 25569) * 86400000);
+  return `${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;
+}
+
+async function downloadPDF() {
+  showLoading('PDF 생성 중...');
+  await new Promise(r => setTimeout(r, 100));
+  
+  try {
+    const pdfBlob = await generatePDFBlob();
+    const fileName = getPDFFileName();
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    hideLoading();
+    showToast('📥 PDF 다운로드 완료');
+  } catch(e) {
+    hideLoading();
+    alert('PDF 생성 오류: ' + e.message);
+    console.error(e);
+  }
+}
+
+// ============================================================
+// Email with PDF attachment (Share API)
+// ============================================================
+
+function getEmailBodyText(customerName) {
+  return `${customerName} 담당자님께,
+
+안녕하세요 담당자님!
+레터스입니다.
+
+현장 내용 토대로 예정되어 있는 기업이사 서비스 견적 전달 드립니다.
+
+레터스는 퍼시스그룹의 40년 가구 공간 노하우를 바탕으로, 안전하고 정확한 서비스를 제공하고 있습니다.
+레터스의 차별점을 몇 가지 소개드리겠습니다.
+
+ⓐ 가구 포장 / 이동의 차별화
+ - 레터스는 가구를 보양(포장)하고 안전하게 이동/보관하는 것에 집중하고 있습니다.
+ - 일부 타업체가 차량에 적재할 수 있는 최대한으로 쌓아서 이동시킨다면, 레터스는 차량의 80% 정도만 활용하여 가구가 파손되지 않도록 하고 있습니다.
+
+ⓑ 사고 대응 능력의 차별화
+ - 지금껏 문제가 되는 이력은 없으나, 레터스는 만일의 사고에 대비하여 '영업배상책임보험'에 가입되어 있습니다. 문제 해결 능력이 더욱 갖추어져 있습니다.
+
+ⓒ 본사 영업 담당자 핸들링
+ - 레터스는 본사 영업 담당자가 프로젝트의 처음부터 끝까지 고객과 소통합니다. 계약 이후 연락이 두절되거나 소통에 소홀한 경우가 있으나, 레터스는 그렇지 않습니다.
+ - 계약 과정은 물론, 현장에서 발생할 수 있는 클레임 대응 / 문제 해결, 무엇보다 고객사의 빠른 업무 복귀에 초점을 맞추고 있습니다.
+
+ⓓ 이사 전문 인력 배치
+ - 레터스는 단순 일용직 작업자가 아닌, 작업 경험이 많은 작업자를 배치합니다. 이에 따라, 업무 능숙에 따른 변수 통제 / 작업 시간 단축 / 고객사와의 원활한 소통이 가능합니다.
+
+추가적으로 레터스는 매주 진행하는 정기청소, 입주 청소, 가구 클리닝, 에어컨 클리닝 등 클리닝 서비스도 전문적으로 제공하고 있습니다.
+(레터스 서비스 살펴보기 : https://blog.naver.com/letus4u/223812769028)
+추가 상담도 가능하오니, 연락 주세요!
+
+견적 한 번 확인해 보시고, 문의사항이나 조율 필요한 부분 있으시면 언제든 연락 부탁드립니다.
+
+감사합니다.
+박가영 드림`;
+}
+
+function getEmailBodyHTML(customerName) {
+  return `<div style="font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;line-height:1.8;color:#000;">
+<p>안녕하세요 담당자님!<br>레터스입니다.</p>
+
+<p>현장 내용 토대로 예정되어 있는 기업이사 서비스 견적 전달 드립니다.</p>
+
+<p>레터스는 <b>퍼시스그룹의 40년 가구 공간 노하우</b>를 바탕으로, 안전하고 정확한 서비스를 제공하고 있습니다.<br>
+레터스의 <span style="color:#e74c3c;"><b>차별점</b></span>을 몇 가지 소개드리겠습니다.</p>
+
+<p><b>ⓐ 가구 포장 / 이동의 차별화</b><br>
+&nbsp;&nbsp;- 레터스는 가구를 <b>보양(포장)</b>하고 안전하게 <b>이동/보관</b>하는 것에 집중하고 있습니다.<br>
+&nbsp;&nbsp;- 일부 타업체가 차량에 적재할 수 있는 최대한으로 쌓아서 이동시킨다면, <span style="color:#e74c3c;"><b>레터스는 차량의 80% 정도만 활용하여 가구가 파손되지 않도록</b></span> 하고 있습니다.</p>
+
+<p><b>ⓑ 사고 대응 능력의 차별화</b><br>
+&nbsp;&nbsp;- 지금껏 문제가 되는 이력은 없으나, 레터스는 <span style="color:#e74c3c;"><b>만일의 사고에 대비하여 '영업배상책임보험'에 가입되어 있습니다.</b></span> 문제 해결 능력이 더욱 갖추어져 있습니다.</p>
+
+<p><b>ⓒ 본사 영업 담당자 핸들링</b><br>
+&nbsp;&nbsp;- <span style="color:#e74c3c;"><b>레터스는 본사 영업 담당자가 프로젝트의 처음부터 끝까지 고객과 소통합니다.</b></span> 계약 이후 연락이 두절되거나 소통에 소홀한 경우가 있으나, 레터스는 그렇지 않습니다.<br>
+&nbsp;&nbsp;- 계약 과정은 물론, 현장에서 발생할 수 있는 클레임 대응 / 문제 해결, 무엇보다 <b>고객사의 빠른 업무 복귀에 초점</b>을 맞추고 있습니다.</p>
+
+<p><b>ⓓ 이사 전문 인력 배치</b><br>
+&nbsp;&nbsp;- 레터스는 단순 일용직 작업자가 아닌, <span style="color:#e74c3c;"><b>작업 경험이 많은 작업자를 배치</b></span>합니다. 이에 따라, 업무 능숙에 따른 변수 통제 / 작업 시간 단축 / 고객사와의 원활한 소통이 가능합니다.</p>
+
+<p>추가적으로 레터스는 매주 진행하는 <span style="color:#e74c3c;"><b>정기청소, 입주 청소, 가구 클리닝, 에어컨 클리닝</b></span> 등 클리닝 서비스도 전문적으로 제공하고 있습니다.<br>
+(레터스 서비스 살펴보기 : <a href="https://blog.naver.com/letus4u/223812769028">https://blog.naver.com/letus4u/223812769028</a>)<br>
+추가 상담도 가능하오니, 연락 주세요! 😊</p>
+
+<br>
+<p>견적 한 번 확인해 보시고, 문의사항이나 조율 필요한 부분 있으시면 언제든 연락 부탁드립니다.</p>
+
+<br>
+<p>감사합니다.<br>박가영 드림</p>
+</div>`;
+}
+
+// Generate PDF as blob (shared by download and email)
+async function generatePDFBlob() {
+  const r = letusResult;
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}년 ${String(today.getMonth()+1).padStart(2,'0')}월 ${String(today.getDate()).padStart(2,'0')}일`;
+  const quoteDateStr = excelDateToStr(Number(coopData.quoteDate)) || todayStr;
+  const workDateStr = excelDateToStr(Number(coopData.workDate)) || '';
+  
+  // Build items HTML (same as downloadPDF)
+  const catOrder = [
+    { key: '인건비', num: 1 },
+    { key: '자재비', num: 2 },
+    { key: '차량비', num: 3 },
+    { key: '옵션', num: 4 },
+  ];
+  
+  let itemsHtml = '';
+  for (const cat of catOrder) {
+    const items = r.items.filter(i => i.category === cat.key);
+    if (items.length === 0) continue;
+    let subtotal = 0;
+    let first = true;
+    for (const item of items) {
+      const total = item.isFreeService ? '-' : fmt(item.letusTotal);
+      if (!item.isFreeService) subtotal += item.letusTotal;
+      const unit = cat.key === '차량비' ? '대' : (cat.key === '인건비' ? '명' : (cat.key === '자재비' ? '개' : '식'));
+      itemsHtml += `<tr>
+        <td class="c">${first ? cat.num : ''}</td>
+        <td class="l">${first ? cat.key : ''}</td>
+        <td class="l">${item.name}</td>
+        <td class="r">${item.qty}</td>
+        <td class="c">${unit}</td>
+        <td class="r">${fmt(item.letusPrice)}</td>
+        <td class="r">${total}</td>
+        <td class="l rem">${item.remark || ''}</td>
+      </tr>`;
+      first = false;
+    }
+    itemsHtml += `<tr class="sub"><td></td><td></td><td></td><td></td><td></td><td class="r">소계</td><td class="r">${fmt(subtotal)}</td><td></td></tr>`;
+  }
+  
+  const c = r.calc;
+  const indirects = [];
+  if (c.gonguPct > 0) indirects.push(['공구손료', c.gonguPct, c.gongu]);
+  indirects.push(['공과잡비', c.gonggwaPct, c.gonggwa]);
+  indirects.push(['운영비 (안전관리, 보험료)', c.unyoungPct, c.unyoung]);
+  indirects.push(['기업이윤', c.iikPct, c.iik]);
+  for (const ind of indirects) {
+    itemsHtml += `<tr class="ind"><td></td><td></td><td class="l">${ind[0]}</td><td></td><td></td><td></td><td class="r">${fmt(Math.round(ind[2]))}</td><td></td></tr>`;
+  }
+  
+  const totalBeforeRound = r.items.filter(i=>!i.isFreeService).reduce((s,i)=>s+i.letusTotal,0) 
+    + (c.gonguPct > 0 ? c.gongu : 0) + c.gonggwa + c.unyoung + c.iik;
+  itemsHtml += `<tr class="total-row"><td colspan="6" class="r" style="font-weight:700;">합 계</td><td class="r" style="font-weight:700;">₩${fmt(Math.round(totalBeforeRound))}</td><td></td></tr>`;
+  itemsHtml += `<tr class="final-row"><td colspan="6" class="r" style="font-weight:700;font-size:13px;">최 종 금 액</td><td class="r" style="font-weight:700;font-size:13px;">₩${fmt(r.finalPrice)}</td><td style="font-size:9px;color:#fff;">부가세 별도</td></tr>`;
+  
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;padding:30px 35px;font-family:"Noto Sans KR",sans-serif;color:#000;font-size:10px;';
+  container.innerHTML = `
+    <style>
+      .pdf-wrap, .pdf-wrap * { font-family: "Noto Sans KR", sans-serif !important; margin:0; padding:0; box-sizing:border-box; }
+      .pdf-wrap table { border-collapse:collapse; }
+      .pdf-wrap .r { text-align:right; }
+      .pdf-wrap .c { text-align:center; }
+      .pdf-wrap .l { text-align:left; }
+      .pdf-wrap .rem { font-size:8px; color:#555; }
+      .main-tbl { width:100%; font-size:9px; }
+      .main-tbl th { background:#f5f5f5; border:1px solid #ccc; padding:4px 5px; font-weight:600; text-align:center; }
+      .main-tbl td { border:1px solid #ddd; padding:3px 5px; }
+      .main-tbl .sub td { background:#fafafa; border-top:2px solid #999; }
+      .main-tbl .ind td { color:#444; }
+      .main-tbl .total-row td { border-top:2px solid #333; background:#f0f0f0; }
+      .main-tbl .final-row td { background:#333; color:#fff; border:1px solid #333; }
+      .main-tbl .final-row .r { color:#fff; }
+    </style>
+    <div class="pdf-wrap">
+      <!-- Logo -->
+      <div style="margin-bottom:10px;">
+        <img src="${LOGO_B64}" style="height:38px;" crossorigin="anonymous">
+      </div>
+      <hr style="border:none;border-top:1px solid #000;margin:8px 0;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;">
+        <span>상담 문의 : 박가영 (010-5064-4150)</span>
+        <span style="font-weight:600;">(주)바로스</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:8px;">
+        <span></span><span>${r.customerName} 고객님</span>
+      </div>
+      <div style="font-size:9px;margin-bottom:8px;color:#333;">
+        레터스 무브 전문가가 ${workDateStr || quoteDateStr}에 '사전 현장 체크리스트'를 바탕으로 산출한 견적입니다.
+      </div>
+      <hr style="border:none;border-top:1px solid #ccc;margin:6px 0 10px;">
+      <table class="main-tbl">
+        <thead><tr>
+          <th style="width:4%;">구분</th><th style="width:8%;"></th><th style="width:22%;">세부품목</th>
+          <th style="width:7%;">수량</th><th style="width:5%;">단위</th><th style="width:13%;">단가</th>
+          <th style="width:14%;">합계</th><th style="width:27%;">특이사항</th>
+        </tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+      <div style="margin-top:12px;border:1px solid #ccc;padding:8px;min-height:30px;">
+        <div style="font-size:9px;font-weight:600;margin-bottom:4px;">비고</div>
+      </div>
+      <table style="width:100%;margin-top:10px;font-size:9px;border-collapse:collapse;">
+        <tr><td style="width:10%;border:1px solid #aaa;padding:4px 8px;background:#f5f5f5;font-weight:600;">출발지</td><td style="border:1px solid #aaa;padding:4px 8px;">${coopData.departure || ''}</td></tr>
+        <tr><td style="border:1px solid #aaa;padding:4px 8px;background:#f5f5f5;font-weight:600;">도착지</td><td style="border:1px solid #aaa;padding:4px 8px;">${coopData.arrival || ''}</td></tr>
+      </table>
+    </div>
+  `;
+  document.body.appendChild(container);
+  
+  // Wait for Noto Sans KR font to fully load
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+  await new Promise(r => setTimeout(r, 800));
+  
+  const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  document.body.removeChild(container);
+  
+  const { jsPDF } = window.jspdf;
+  const imgWidth = 210;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const pageHeight = 297;
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  
+  if (imgHeight > pageHeight) {
+    const scale = pageHeight / imgHeight;
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth * scale + (imgWidth * (1-scale))/2, pageHeight);
+  } else {
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth, imgHeight);
+  }
+  
+  return doc.output('blob');
+}
+
+function getPDFFileName() {
+  const r = letusResult;
+  const today = new Date();
+  const ds = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  return `레터스_${r.customerName} 기업이사 서비스 견적_${ds}.pdf`;
+}
+
+function blobToBase64Raw(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      resolve(dataUrl.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function encodeUTF8Base64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function wrapBase64(base64, lineLen = 76) {
+  let result = '';
+  for (let i = 0; i < base64.length; i += lineLen) {
+    result += base64.slice(i, i + lineLen) + '\r\n';
+  }
+  return result;
+}
+
+async function sendEmailWithPDF() {
+  showLoading('이메일 생성 중...');
+  
+  try {
+    const r = letusResult;
+    const pdfBlob = await generatePDFBlob();
+    const fileName = getPDFFileName();
+    
+    // PDF → base64
+    const pdfBase64 = await blobToBase64Raw(pdfBlob);
+    
+    const toEmail = (r.customerEmail || '').trim();
+    const subject = `[레터스] ${r.customerName} 기업이사 견적서 전달의 건`;
+    
+    // 숨은참조 (BCC)
+    const bccList = [
+      'kwangjoon_yoon@fursys.com',
+      'wonjung_goh@fursys.com',
+      'dongyeol_lee@fursys.com',
+      'yeol_park@fursys.com',
+      'jjun7696@fursys.com',
+      'bypark@fursys.com'
+    ].join(', ');
+    
+    const boundary = 'boundary_' + Date.now();
+    const encodedSubject = '=?UTF-8?B?' + encodeUTF8Base64(subject) + '?=';
+    const encodedFileName = "=?UTF-8?B?" + encodeUTF8Base64(fileName) + "?=";
+    
+    const eml = [
+      'To: ' + toEmail,
+      'Subject: ' + encodedSubject,
+      'BCC: ' + bccList,
+      'X-Unsent: 1',
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/mixed; boundary="' + boundary + '"',
+      '',
+      '--' + boundary,
+      'Content-Type: text/plain; charset="UTF-8"',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      '',
+      '--' + boundary,
+      'Content-Type: application/pdf; name="' + encodedFileName + '"',
+      'Content-Disposition: attachment; filename="' + encodedFileName + '"',
+      'Content-Transfer-Encoding: base64',
+      '',
+      wrapBase64(pdfBase64),
+      '--' + boundary + '--'
+    ].join('\r\n');
+    
+    const emlBlob = new Blob([eml], { type: 'message/rfc822' });
+    const emlFileName = (r.customerName || '견적서') + '_견적서.eml';
+    
+    hideLoading();
+    
+    // Web Share API 시도 (모바일)
+    if (navigator.share && navigator.canShare) {
+      const emlFile = new File([emlBlob], emlFileName, { type: 'message/rfc822' });
+      if (navigator.canShare({ files: [emlFile] })) {
+        try {
+          await navigator.share({ files: [emlFile] });
+          showToast('✅ 이메일이 공유되었습니다.', 3000);
+          return;
+        } catch(e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+    }
+    
+    // Fallback: .eml 파일 다운로드
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(emlBlob);
+    link.download = emlFileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('📧 이메일 파일(.eml)이 다운로드되었습니다.<br>파일을 열면 Outlook에서 바로 전송할 수 있습니다.', 6000);
+    
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+    console.error(e);
+  }
+}
+</script>
+</body>
+</html>
